@@ -59,7 +59,7 @@ def create_app():
     def add_user():
         user = request.get_json()
         with Session.begin() as session:
-            user_row = User(user_id = uuid.uuid4(), username = user['user_name'] first_name = user['first_name'], last_name = user['last_name'])
+            user_row = User(user_id = uuid.uuid4(), username = user['user_name'], first_name = user['first_name'], last_name = user['last_name'])
             session.add(user_row)
             print(user_row.id)
             user_info = user_row.user_info()
