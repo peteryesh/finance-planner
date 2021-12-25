@@ -7,12 +7,22 @@
 click==8.0.3
     # via flask
 flask==2.0.2
+    # via
+    #   -r requirements.in
+    #   flask-cors
+flask-cors==3.0.10
     # via -r requirements.in
+greenlet==1.1.2
+    # via sqlalchemy
 itsdangerous==2.0.1
     # via flask
 jinja2==3.0.3
     # via flask
 markupsafe==2.0.1
     # via jinja2
+six==1.16.0
+    # via flask-cors
+sqlalchemy==1.4.29
+    # via -r requirements.in
 werkzeug==2.0.2
     # via flask
