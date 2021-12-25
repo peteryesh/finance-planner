@@ -1,0 +1,15 @@
+version: "3"
+services:
+    db:
+        image: "postgres"
+        container_name: "localpg"
+        environment:
+            - POSTGRES_DB=postgresdb
+            - POSTGRES_USER=peter
+            - POSTGRES_PASSWORD=supersecretpassword
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgresql-volume:/var/lib/postgresql/data
+volumes:
+    postgresql-volume:

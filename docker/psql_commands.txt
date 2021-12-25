@@ -1,0 +1,38 @@
+docker-compose run db bash psql --host=db --username=peter --dbname=postgresdb
+
+docker volume rm $(docker volume ls -q)
+
+SELECT * from users;
+
+CREATE TABLE [IF NOT EXISTS] table_name (
+    column1 datatype(length) column_constraint,
+    column2 datatype(length) column_constraint,
+    table_constraints
+);
+
+Constraints:
+    - NOT NULL
+    - UNIQUE
+    - PRIMARY KEY
+    - CHECK
+    - FOREIGN KEY
+
+SQL Queries:
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id UUID PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    date DATE NOT NULL,
+    value FLOAT(2) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    category VARCHAR(50) NOT NULL,
+    notes VARCHAR(255)
+);
