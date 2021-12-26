@@ -4,8 +4,12 @@
 #
 #    pip-compile requirements.in
 #
+black==21.12b0
+    # via -r requirements.in
 click==8.0.3
-    # via flask
+    # via
+    #   black
+    #   flask
 flask==2.0.2
     # via
     #   -r requirements.in
@@ -20,9 +24,19 @@ jinja2==3.0.3
     # via flask
 markupsafe==2.0.1
     # via jinja2
+mypy-extensions==0.4.3
+    # via black
+pathspec==0.9.0
+    # via black
+platformdirs==2.4.0
+    # via black
 six==1.16.0
     # via flask-cors
 sqlalchemy==1.4.29
     # via -r requirements.in
+tomli==1.2.3
+    # via black
+typing-extensions==4.0.1
+    # via black
 werkzeug==2.0.2
     # via flask
