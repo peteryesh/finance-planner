@@ -16,23 +16,18 @@ def create_app():
     Session = sessionmaker(bind=engine)
     metadata = MetaData()
 
-    with Session() as session:
-        exists = session.query(User.username).filter_by(username='petercnoh').scalar() is not None
-        if exists:
-            session.query(User).filter_by(username='petercnoh').first()
-        else:
-            new_user = User(username = 'petercnoh', first_name = 'peter', last_name = 'noh')
-            session.add(new_user)
-        session.commit()
-
-    @app.route('/', methods=['GET'])
+    @app.route('/', methods=['POST'])
     def default():
         return 'Hello world!'
 
     ## User endpoints ##
     @app.route('/adduser', methods=['POST'])
     def add_user():
-        return ''
+        print(request.form['username'])
+        print(request.form['first_name'])
+        print(request.form['last_name'])
+        print('hi there mr ang')
+        return jsonify({'success': True})
 
     @app.route('/updateuser', methods=['POST'])
     def update_user():
