@@ -1,32 +1,15 @@
 import uuid
 from typing import cast
 
-from sqlalchemy import Table, Column, Integer, String
+from sqlalchemy import Table, Column, Integer, String, Float, Date
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.dialects.postgresql import UUID
 
 Base = declarative_base()
-
-PostgreSQLUUID = cast(
-    "sqlalchemy.types.TypeEngine[uuid.UUID]",
-    UUID(as_uuid=True)
-)
-
-def create_user_table(metadata):
-    user_table = Table(
-        "users",
-        metadata,
-        Column('user_id', PostgreSQLUUID, primary_key=True),
-        Column('username', String(30)),
-        Column('first_name', String(30)),
-        Column('last_name', String(30))
-    )
 
 class User(Base):
     __tablename__ = 'users'
 
-    user_id = Column(PostgreSQLUUID, primary_key=True)
-    username = Column(String)
+    username = Column(String, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
 
@@ -35,8 +18,26 @@ class User(Base):
 
     def user_info(self):
         return {
-            'user_id': self.user_id,
             'username': self.username,
             'first_name': self.first_name,
             'last_name': self.last_name
         }
+
+class Account(Base):
+    __tablename__ = 'accounts'
+
+    account_id = Column(Integer, primary_key=True)
+    account_type = Column(String)
+    account_name = Column(String)
+    account_balance = Column(Float)
+    user_id = Column(Integer)
+
+class Transaction(Base):
+    __tablename__ = 'transactions'
+    
+    transaction_id = Column(Integer, primary_key=True)
+    date = Column(Date)
+    amount = Column(Float)
+    category = Column(String)
+    notes = Column(String)
+    account_id = Column(Integer)
