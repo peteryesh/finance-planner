@@ -1,3 +1,11 @@
-<h1>Hellow world!</h1>
-
+<h1>Adding users</h1>
+<form onsubmit=onUserSubmit()>
+    <p>username</p><input type="text">
+    <p>first name</p><input type="text">
+    <p>last name</p><input type="text">
+    <br>
+    <br>
+    <input type="submit" name="submit" value="Submit" />
+</form>
+<button (click)="submitUser()">Test User</button>
 <router-outlet></router-outlet>
