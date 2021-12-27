@@ -1,25 +1,29 @@
 import uuid
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, g, current_app
 from flask_cors import CORS
 
 from sqlalchemy import create_engine, MetaData, select, update
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from sql_service import User, Account, Transaction
+from src.sql_service import User, Account, Transaction, Base
 
 
-def create_app():
+def create_app(config):
     app = Flask(__name__)
+
+    app.config.update(config)
+
     CORS(
         app,
         resources={r"/*": {"origins": ["http://localhost:4200"]}},
         supports_credentials=True,
     )
 
-    engine = create_engine("sqlite:///../../databases/finance_tracker.db")
-    Session = sessionmaker(bind=engine)
-    metadata = MetaData()
+    with app.app_context():
+        engine = get_db()
+        Session = sessionmaker(bind=engine)
+        metadata = MetaData()
 
     @app.route("/", methods=["POST"])
     def default():
@@ -141,9 +145,28 @@ def create_app():
     return app
 
 
+def get_db():
+    """Establish a connection to the database and maintain that throughout the lifetime
+    of a gien flask app context
+    """
+    if "db" not in g:
+        g.db = create_engine(current_app.config["DATABASE_CONNECTION_STRING"])
+
+    return g.db
+
+
+def init_db():
+    """Initialize all tables in the database"""
+    db = get_db()
+    Base.metadata.create_all(db)
+
+
 def main():
     print("Starting app...")
-    app = create_app()
+    config = {
+        "DATABASE_CONNECTION_STRING": "sqlite:///../../databases/finance_tracker.db"
+    }
+    app = create_app(config)
     app.run(debug=True)
 
 
