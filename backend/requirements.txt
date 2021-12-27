@@ -4,8 +4,20 @@
 #
 #    pip-compile requirements.in
 #
+backports.entry-points-selectable==1.1.1
+    # via virtualenv
+black==21.12b0
+    # via -r requirements.in
+cfgv==3.3.1
+    # via pre-commit
 click==8.0.3
-    # via flask
+    # via
+    #   black
+    #   flask
+distlib==0.3.4
+    # via virtualenv
+filelock==3.4.0
+    # via virtualenv
 flask==2.0.2
     # via
     #   -r requirements.in
@@ -14,15 +26,41 @@ flask-cors==3.0.10
     # via -r requirements.in
 greenlet==1.1.2
     # via sqlalchemy
+identify==2.4.0
+    # via pre-commit
 itsdangerous==2.0.1
     # via flask
 jinja2==3.0.3
     # via flask
 markupsafe==2.0.1
     # via jinja2
+mypy-extensions==0.4.3
+    # via black
+nodeenv==1.6.0
+    # via pre-commit
+pathspec==0.9.0
+    # via black
+platformdirs==2.4.0
+    # via
+    #   black
+    #   virtualenv
+pre-commit==2.16.0
+    # via -r requirements.in
+pyyaml==6.0
+    # via pre-commit
 six==1.16.0
-    # via flask-cors
+    # via
+    #   flask-cors
+    #   virtualenv
 sqlalchemy==1.4.29
     # via -r requirements.in
+toml==0.10.2
+    # via pre-commit
+tomli==1.2.3
+    # via black
+typing-extensions==4.0.1
+    # via black
+virtualenv==20.10.0
+    # via pre-commit
 werkzeug==2.0.2
     # via flask
