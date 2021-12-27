@@ -1,11 +1,34 @@
 <h1>Adding users</h1>
-<form onsubmit=onUserSubmit()>
-    <p>username</p><input type="text">
-    <p>first name</p><input type="text">
-    <p>last name</p><input type="text">
-    <br>
-    <br>
-    <input type="submit" name="submit" value="Submit" />
-</form>
-<button (click)="submitUser()">Test User</button>
+
+<button (click)="submitUser()">Add User</button>
+<button (click)="viewUser()">Test View User</button>
+<button (click)="deleteUser()">Test Delete User</button>
+
+<div>
+    <input 
+        type="text" 
+        #usernameInput
+        (keyup)="usernameChange(usernameInput.value)"
+        name="username"
+    />
+    <p>username: {{user.username}}</p>
+
+    <input 
+        type="text" 
+        #firstNameInput
+        (keyup)="firstNameChange(firstNameInput.value)"
+        name="firstName"
+    />
+    <p>first name: {{user.first_name}}</p>
+
+    <input 
+        type="text" 
+        #lastNameInput
+        (keyup)="lastNameChange(lastNameInput.value)"
+        name="lastName"
+    />
+    <p>last name: {{user.last_name}}</p>
+</div>
+
+
 <router-outlet></router-outlet>

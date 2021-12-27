@@ -14,7 +14,7 @@ class User(Base):
     last_name = Column(String)
 
     def __repr__(self):
-        return "<User(first_name='%s', last_name='%s')>" % (self.first_name, self.last_name)
+        return "<User(username='%s', first_name='%s', last_name='%s')>" % (self.username, self.first_name, self.last_name)
 
     def user_info(self):
         return {

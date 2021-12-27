@@ -24,15 +24,47 @@ export class AppComponent {
 
     testUrl = 'http://localhost:5000';
 
+    user: User = {
+        username: '',
+        first_name: '',
+        last_name: ''
+    }
+
+
     constructor(private http: HttpClient) { }
 
     submitUser() {
-        const new_user = {
-            username: 'petercnoh',
-            first_name: 'peter',
-            last_name: 'noh'
-        };
-        const response = this.http.post(`${this.testUrl}/adduser`, new_user);
+        const response = this.http.post(`${this.testUrl}/user`, JSON.stringify(this.user), httpOptions);
         response.subscribe(event => console.log(event));
+    }
+
+    viewUser() {
+        const username = 'petercnoh';
+        const response = this.http.get(`${this.testUrl}/user?username=${this.user.username}`);
+        response.subscribe(event => console.log(event));
+    }
+
+    viewFalseUser() {
+        const username = 'somebodyelse';
+        const response = this.http.get(`${this.testUrl}/user?username=${this.user.username}`);
+        response.subscribe(event => console.log(event));
+    }
+
+    deleteUser() {
+        const username = 'petercnoh';
+        const response = this.http.delete(`${this.testUrl}/user?username=${this.user.username}`);
+        response.subscribe(event => console.log(event));
+    }
+
+    usernameChange(val: string) {
+        this.user.username = val;
+    }
+
+    firstNameChange(val: string) {
+        this.user.first_name = val;
+    }
+
+    lastNameChange(val: string) {
+        this.user.last_name = val;
     }
 }
