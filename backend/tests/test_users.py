@@ -12,7 +12,6 @@ def test_bad_post_requests(
         "/user",
         json={"username": username, "first_name": first_name, "last_name": last_name},
     )
-    print(res.status_code)
     assert res.status_code == expected_status_code
 
 
