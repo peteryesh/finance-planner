@@ -49,7 +49,7 @@ def create_app():
 
             # Error check
             if username == None or username == '':
-                return Response(response='username cannot be blank', status=400)
+                return jsonify({'status': 400, 'response': 'username cannot be blank'})
 
             with Session.begin() as session:
                 user_query = session.query(User).filter_by(username=username)
@@ -61,7 +61,7 @@ def create_app():
 
             # Error check
             if username == None or username == '':
-                return Response(response='username cannot be blank', status=400)
+                return jsonify({'status': 400, 'response': 'username cannot be blank'})
 
             with Session.begin() as session:
                 user_query = session.query(User).filter_by(username=username)
