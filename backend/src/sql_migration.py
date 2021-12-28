@@ -20,7 +20,6 @@ def main():
         "DATABASE_CONNECTION_STRING": "sqlite:///../../databases/finance_tracker.db"
     }
     engine = create_engine(config["DATABASE_CONNECTION_STRING"])
-    Session = sessionmaker(bind=engine)
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(engine)
 
