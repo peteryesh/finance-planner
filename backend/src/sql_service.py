@@ -13,6 +13,7 @@ class User(Base):
     username = Column(String(30), primary_key=True)
     first_name = Column(String(30))
     last_name = Column(String(30))
+    accounts = relationship("Account")
 
     def __repr__(self):
         return "<User(username='%s', first_name='%s', last_name='%s')>" % (
@@ -21,7 +22,7 @@ class User(Base):
             self.last_name,
         )
 
-    def user_info(self):
+    def user_dict(self):
         return {
             "username": self.username,
             "first_name": self.first_name,
@@ -32,11 +33,20 @@ class User(Base):
 class Account(Base):
     __tablename__ = "accounts"
 
-    account_id = Column(Integer, primary_key=True)
-    account_type = Column(String(30))
+    account_id = Column(String(36), primary_key=True)
+    account_type = Column(Integer)
     account_name = Column(String(30))
     account_balance = Column(Float)
-    username = Column(String(30))
+    username = Column(String(30), ForeignKey("users.username"))
+
+    def account_dict(self):
+        return {
+            "account_id": self.account_id,
+            "account_type": self.account_type,
+            "account_name": self.account_name,
+            "account_balance": self.account_balance,
+            "username": self.username,
+        }
 
 
 class Transaction(Base):
@@ -47,5 +57,7 @@ class Transaction(Base):
     amount = Column(Float)
     category = Column(String(30))
     notes = Column(String(30))
-    account_id = Column(Integer, ForeignKey("accounts.account_id", ondelete="SET NULL"))
+    account_id = Column(
+        String(36), ForeignKey("accounts.account_id", ondelete="SET NULL")
+    )
     username = Column(String(30), ForeignKey("users.username"))
