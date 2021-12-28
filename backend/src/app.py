@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, MetaData, select, update
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from src.sql_service import User, Account, Transaction, Base
+from src.types import AccountType
 
 
 def create_app(config):
@@ -38,13 +39,12 @@ def create_app(config):
             last_name = request.json["last_name"]
 
             # Error check
-            if username == None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
-                user_query = session.query(User).filter_by(username=username)
-                if session.query(user_query.exists()).scalar():
-                    user = user_query.one()
+                if user_exists(session, username):
+                    user = get_user_from_db(session, username)
                     user.username = username
                     user.first_name = first_name
                     user.last_name = last_name
@@ -52,7 +52,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": user.user_info(),
+                                "user": user.user_dict(),
                                 "msg": "Updated user information",
                             }
                         ),
@@ -67,7 +67,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": new_user.user_info(),
+                                "user": new_user.user_dict(),
                                 "msg": "New user created",
                             }
                         ),
@@ -77,30 +77,32 @@ def create_app(config):
             username = request.args["username"]
 
             # Error check
-            if username == None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
-                user_query = session.query(User).filter_by(username=username)
-                if session.query(user_query.exists()).scalar():
+                if user_exists(session, username):
                     return (
                         jsonify(
-                            {"success": True, "user": user_query.first().user_info()}
+                            {
+                                "success": True,
+                                "user": get_user_from_db(session, username).user_dict(),
+                            }
                         ),
                         200,
                     )
             return jsonify({"success": False, "msg": "User does not exist"}), 404
+
         elif request.method == "DELETE":
             username = request.args["username"]
 
             # Error check
-            if username == None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
-                user_query = session.query(User).filter_by(username=username)
-                if session.query(user_query.exists()).scalar():
-                    user = user_query.first()
+                if user_exists(session, username):
+                    user = get_user_from_db(session, username)
                     session.delete(user)
                     return (
                         jsonify({"success": True, "msg": "User has been deleted"}),
@@ -108,17 +110,71 @@ def create_app(config):
                     )
             return jsonify({"success": False, "msg": "User does not exist"}), 204
 
-    @app.route("/updateuser", methods=["POST"])
-    def update_user():
-        return ""
+    ## Account endpoints ##
+    @app.route("/account", methods=["POST"])
+    def add_account():
+        if request.method == "POST":
+            account_info = request.json
 
-    @app.route("/deleteuser", methods=["GET"])
-    def delete_user():
-        return ""
+            # Error check
+            if string_blank(account_info["username"]):
+                return jsonify({"response": "username cannot be blank"}), 400
+            if not account_type_valid(account_info["account_type"]):
+                return jsonify({"response": "Account type is not valid"}), 400
 
-    @app.route("/viewuser", methods=["GET"])
-    def view_user():
-        return ""
+            with Session.begin() as session:
+                if not user_exists(session, account_info["username"]):
+                    return (
+                        jsonify({"success": False, "msg": "User does not exist"}),
+                        400,
+                    )
+                # If a blank account_id is given, regard as new account entry
+                elif string_blank(account_info["account_id"]):
+                    new_account_id = str(uuid.uuid4())
+                    while account_exists(session, new_account_id):
+                        new_account_id = str(uuid.uuid4())
+                    new_account = Account(
+                        account_id=new_account_id,
+                        account_type=account_info["account_type"],
+                        account_name=account_info["account_name"],
+                        account_balance=account_info["account_balance"],
+                        username=account_info["username"],
+                    )
+                    if string_blank(new_account.account_name):
+                        new_account.account_name = "Squirtle is lucky"
+                    if new_account.account_balance is None:
+                        new_account.account_balance = 0
+                    session.add(new_account)
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "account": new_account.account_dict(),
+                                "msg": "New account successfully created",
+                            }
+                        ),
+                        201,
+                    )
+                elif account_exists(session, account_info["account_id"]):
+                    acct = get_account_from_db(session, account_info["account_id"])
+                    acct.account_type = account_info["account_type"]
+                    acct.account_name = account_info["account_name"]
+                    acct.account_balance = account_info["account_balance"]
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "account": acct.account_dict(),
+                                "msg": "Account info successfully updated",
+                            }
+                        ),
+                        200,
+                    )
+                else:
+                    return (
+                        jsonify({"success": False, "msg": "Account does not exist"}),
+                        400,
+                    )
 
     ## Transaction endpoints ##
     @app.route("/addtransaction", methods=["POST"])
@@ -135,23 +191,6 @@ def create_app(config):
 
     @app.route("/viewtransactions", methods=["GET"])
     def view_transactions():
-        return ""
-
-    ## Account endpoints
-    @app.route("/addaccount", methods=["POST"])
-    def add_account():
-        return ""
-
-    @app.route("/updateaccount", methods=["POST"])
-    def update_account():
-        return ""
-
-    @app.route("/deleteaccount", methods=["GET"])
-    def delete_account():
-        return ""
-
-    @app.route("/viewaccount", methods=["GET"])
-    def view_account():
         return ""
 
     return app
@@ -171,6 +210,39 @@ def init_db():
     """Initialize all tables in the database"""
     db = get_db()
     Base.metadata.create_all(db)
+
+
+def user_exists(session, username):
+    return session.query(
+        session.query(User).filter(User.username == username).exists()
+    ).scalar()
+
+
+def get_user_from_db(session, username):
+    return session.query(User).filter_by(username=username).one()
+
+
+def account_exists(session, acct_id):
+    return session.query(
+        session.query(Account).filter(Account.account_id == acct_id).exists()
+    ).scalar()
+
+
+def get_account_from_db(session, acct_id):
+    return session.query(Account).filter_by(account_id=acct_id).one()
+
+
+def account_type_valid(acct_type: int):
+    if acct_type is None:
+        return False
+    for type in AccountType:
+        if acct_type == type.value:
+            return True
+    return False
+
+
+def string_blank(s: str):
+    return s is None or s == ""
 
 
 def main():
