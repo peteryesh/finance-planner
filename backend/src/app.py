@@ -39,7 +39,7 @@ def create_app(config):
 
             # Error check
             if username == None or username == "":
-                return jsonify({"status": 400, "response": "username cannot be blank"})
+                return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
                 user_query = session.query(User).filter_by(username=username)
@@ -48,53 +48,65 @@ def create_app(config):
                     user.username = username
                     user.first_name = first_name
                     user.last_name = last_name
-                    return jsonify(
-                        {
-                            "success": True,
-                            "user": user.user_info(),
-                            "msg": "Updated user information",
-                        }
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "user": user.user_info(),
+                                "msg": "Updated user information",
+                            }
+                        ),
+                        200,
                     )
                 else:
                     new_user = User(
                         username=username, first_name=first_name, last_name=last_name
                     )
                     session.add(new_user)
-                    return jsonify(
-                        {
-                            "success": True,
-                            "user": new_user.user_info(),
-                            "msg": "New user created",
-                        }
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "user": new_user.user_info(),
+                                "msg": "New user created",
+                            }
+                        ),
+                        200,
                     )
         elif request.method == "GET":
             username = request.args["username"]
 
             # Error check
             if username == None or username == "":
-                return jsonify({"status": 400, "response": "username cannot be blank"})
+                return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
                 user_query = session.query(User).filter_by(username=username)
                 if session.query(user_query.exists()).scalar():
-                    return jsonify(
-                        {"success": True, "user": user_query.first().user_info()}
+                    return (
+                        jsonify(
+                            {"success": True, "user": user_query.first().user_info()}
+                        ),
+                        200,
                     )
-            return jsonify({"success": False, "msg": "User does not exist"})
+            return jsonify({"success": False, "msg": "User does not exist"}), 404
         elif request.method == "DELETE":
             username = request.args["username"]
 
             # Error check
             if username == None or username == "":
-                return jsonify({"status": 400, "response": "username cannot be blank"})
+                return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
                 user_query = session.query(User).filter_by(username=username)
                 if session.query(user_query.exists()).scalar():
                     user = user_query.first()
                     session.delete(user)
-                    return jsonify({"success": True, "msg": "User has been deleted"})
-            return jsonify({"success": False, "msg": "User does not exist"})
+                    return (
+                        jsonify({"success": True, "msg": "User has been deleted"}),
+                        200,
+                    )
+            return jsonify({"success": False, "msg": "User does not exist"}), 204
 
     @app.route("/updateuser", methods=["POST"])
     def update_user():
