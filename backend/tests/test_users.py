@@ -63,7 +63,7 @@ def test_create_user(client, username, first_name, last_name):
     assert res.json["user"]["username"] == username
     assert res.json["user"]["first_name"] == first_name
     assert res.json["user"]["last_name"] == last_name
-    assert res.status_code == 200
+    assert res.status_code == 201
 
 
 @pytest.mark.parametrize("username,first_name,last_name", TEST_USER_DATA)
@@ -75,7 +75,7 @@ def test_crd_user(client, username, first_name, last_name):
     assert res.json["user"]["username"] == username
     assert res.json["user"]["first_name"] == first_name
     assert res.json["user"]["last_name"] == last_name
-    assert res.status_code == 200
+    assert res.status_code == 201
 
     res = client.get(f"/user?username={username}")
     assert res.json["user"]["username"] == username

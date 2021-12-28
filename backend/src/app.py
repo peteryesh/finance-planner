@@ -71,7 +71,7 @@ def create_app(config):
                                 "msg": "New user created",
                             }
                         ),
-                        200,
+                        201,
                     )
         elif request.method == "GET":
             username = request.args["username"]
