@@ -1,8 +1,8 @@
 import uuid
 from typing import cast
 
-from sqlalchemy import Table, Column, Integer, String, Float, Date
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Table, Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -10,9 +10,9 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    username = Column(String, primary_key=True)
-    first_name = Column(String)
-    last_name = Column(String)
+    username = Column(String(30), primary_key=True)
+    first_name = Column(String(30))
+    last_name = Column(String(30))
 
     def __repr__(self):
         return "<User(username='%s', first_name='%s', last_name='%s')>" % (
@@ -33,10 +33,10 @@ class Account(Base):
     __tablename__ = "accounts"
 
     account_id = Column(Integer, primary_key=True)
-    account_type = Column(String)
-    account_name = Column(String)
+    account_type = Column(String(30))
+    account_name = Column(String(30))
     account_balance = Column(Float)
-    user_id = Column(Integer)
+    username = Column(String(30))
 
 
 class Transaction(Base):
@@ -45,6 +45,7 @@ class Transaction(Base):
     transaction_id = Column(Integer, primary_key=True)
     date = Column(Date)
     amount = Column(Float)
-    category = Column(String)
-    notes = Column(String)
-    account_id = Column(Integer)
+    category = Column(String(30))
+    notes = Column(String(30))
+    account_id = Column(Integer, ForeignKey("accounts.account_id", ondelete="SET NULL"))
+    username = Column(String(30), ForeignKey("users.username"))
