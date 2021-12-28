@@ -39,7 +39,7 @@ def create_app(config):
             last_name = request.json["last_name"]
 
             # Error check
-            if username is None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
@@ -77,7 +77,7 @@ def create_app(config):
             username = request.args["username"]
 
             # Error check
-            if username is None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
@@ -97,7 +97,7 @@ def create_app(config):
             username = request.args["username"]
 
             # Error check
-            if username is None or username == "":
+            if string_blank(username):
                 return jsonify({"response": "username cannot be blank"}), 400
 
             with Session.begin() as session:
@@ -110,14 +110,14 @@ def create_app(config):
                     )
             return jsonify({"success": False, "msg": "User does not exist"}), 204
 
-    ## Account endpoints
+    ## Account endpoints ##
     @app.route("/account", methods=["POST"])
     def add_account():
         if request.method == "POST":
             account_info = request.json
 
             # Error check
-            if account_info["username"] is None or account_info["username"] == "":
+            if string_blank(account_info["username"]):
                 return jsonify({"response": "username cannot be blank"}), 400
             if not account_type_valid(account_info["account_type"]):
                 return jsonify({"response": "Account type is not valid"}), 400
@@ -126,12 +126,10 @@ def create_app(config):
                 if not user_exists(session, account_info["username"]):
                     return (
                         jsonify({"success": False, "msg": "User does not exist"}),
-                        204,
+                        400,
                     )
-                elif (
-                    account_info["account_id"] == ""
-                    or account_info["account_id"] is None
-                ):
+                # If a blank account_id is given, regard as new account entry
+                elif string_blank(account_info["account_id"]):
                     new_account_id = str(uuid.uuid4())
                     while account_exists(session, new_account_id):
                         new_account_id = str(uuid.uuid4())
@@ -142,10 +140,7 @@ def create_app(config):
                         account_balance=account_info["account_balance"],
                         username=account_info["username"],
                     )
-                    if (
-                        new_account.account_name == ""
-                        or new_account.account_name is None
-                    ):
+                    if string_blank(new_account.account_name):
                         new_account.account_name = "Squirtle is lucky"
                     if new_account.account_balance is None:
                         new_account.account_balance = 0
@@ -158,7 +153,7 @@ def create_app(config):
                                 "msg": "New account successfully created",
                             }
                         ),
-                        200,
+                        201,
                     )
                 elif account_exists(session, account_info["account_id"]):
                     acct = get_account_from_db(session, account_info["account_id"])
@@ -178,7 +173,7 @@ def create_app(config):
                 else:
                     return (
                         jsonify({"success": False, "msg": "Account does not exist"}),
-                        204,
+                        400,
                     )
 
     ## Transaction endpoints ##
@@ -244,6 +239,10 @@ def account_type_valid(acct_type: int):
         if acct_type == type.value:
             return True
     return False
+
+
+def string_blank(s: str):
+    return s is None or s == ""
 
 
 def main():

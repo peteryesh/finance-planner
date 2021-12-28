@@ -13,12 +13,23 @@ TEST_ACCT_DATA = [
     ),
 ]
 
+TEST_NEW_ACCT_DATA = [
+    ("", 1, "John Checking", 5167.83, "johnsmith"),
+    (
+        None,
+        7,
+        "Jane TD Ameritrade",
+        13200.65,
+        "janesmith",
+    ),
+]
+
 
 @pytest.mark.parametrize(
-    "account_id,account_type,account_name,account_balance,username,expected_status_code",
+    "account_id,account_type,account_name,account_balance,username",
     [
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 1, "Checking", 500.00, "", 400),
-        ("070bf38e-65ba-477a-87ca-711bfd0d7fd2", 1, "Checking", 500.00, None, 400),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 1, "Checking", 500.00, ""),
+        ("070bf38e-65ba-477a-87ca-711bfd0d7fd2", 1, "Checking", 500.00, None),
     ],
 )
 def test_account_post_missing_username(
@@ -28,7 +39,6 @@ def test_account_post_missing_username(
     account_name,
     account_balance,
     username,
-    expected_status_code,
 ):
     res = client.post(
         "/account",
@@ -40,25 +50,19 @@ def test_account_post_missing_username(
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 400
 
 
 ## Expected result: Create account row with new uuid
 @pytest.mark.parametrize(
-    "account_id,account_type,account_name,account_balance,username,expected_status_code",
+    "account_id,account_type,account_name,account_balance,username",
     [
-        ("", 1, "Checking", 500.00, "johnsmith", 200),
-        (None, 1, "Checking", 500.00, "janesmith", 200),
+        ("", 1, "Checking", 500.00, "johnsmith"),
+        (None, 1, "Checking", 500.00, "janesmith"),
     ],
 )
 def test_new_account_id(
-    client,
-    account_id,
-    account_type,
-    account_name,
-    account_balance,
-    username,
-    expected_status_code,
+    client, account_id, account_type, account_name, account_balance, username
 ):
     client.post(
         "/user",
@@ -74,7 +78,7 @@ def test_new_account_id(
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 201
     assert len(res.json["account"]["account_id"]) == 36
     assert res.json["account"]["account_type"] == account_type
     assert res.json["account"]["account_name"] == account_name
@@ -83,13 +87,13 @@ def test_new_account_id(
 
 
 @pytest.mark.parametrize(
-    "account_id,username,expected_status_code",
+    "account_id,username",
     [
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", "johnsmith", 204),
-        ("070bf38e-65ba-477a-87ca-711bfd0d7fd2", "janesmith", 204),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", "johnsmith"),
+        ("070bf38e-65ba-477a-87ca-711bfd0d7fd2", "janesmith"),
     ],
 )
-def test_post_invalid_account_id(client, account_id, username, expected_status_code):
+def test_post_invalid_account_id(client, account_id, username):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
     res = client.post(
         "/account",
@@ -101,21 +105,54 @@ def test_post_invalid_account_id(client, account_id, username, expected_status_c
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "account_id, account_type, username, expected_status_code",
+    "account_id,account_type,account_name,account_balance,username", TEST_NEW_ACCT_DATA
+)
+def test_post_valid_account_id(
+    client, account_id, account_type, account_name, account_balance, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    init_res = client.post(
+        "/account",
+        json={
+            "account_id": account_id,
+            "account_type": account_type,
+            "account_name": account_name,
+            "account_balance": account_balance,
+            "username": username,
+        },
+    )
+    res = client.post(
+        "/account",
+        json={
+            "account_id": init_res.json["account"]["account_id"],
+            "account_type": account_type + 2,
+            "account_name": account_name + "test string addition",
+            "account_balance": account_balance - 5000,
+            "username": username,
+        },
+    )
+    assert res.status_code == 200
+    assert len(res.json["account"]["account_id"]) == 36
+    assert res.json["account"]["account_type"] == account_type + 2
+    assert res.json["account"]["account_name"] == account_name + "test string addition"
+    assert res.json["account"]["account_balance"] == account_balance - 5000
+    assert res.json["account"]["username"] == username
+
+
+@pytest.mark.parametrize(
+    "account_id, account_type, username",
     [
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 0, "johnsmith", 400),
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 10, "johnsmith", 400),
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", -1, "johnsmith", 400),
-        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", None, "johnsmith", 400),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 0, "johnsmith"),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", 10, "johnsmith"),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", -1, "johnsmith"),
+        ("a58273f4-ed75-419d-b4c6-ecd38d0571c6", None, "johnsmith"),
     ],
 )
-def test_account_type_invalid(
-    client, account_id, account_type, username, expected_status_code
-):
+def test_account_type_invalid(client, account_id, account_type, username):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
     res = client.post(
         "/account",
@@ -125,16 +162,16 @@ def test_account_type_invalid(
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 400
 
 
 @pytest.mark.parametrize(
-    "account_id,account_type,account_name,account_balance,username,expected_status_code",
+    "account_id,account_type,account_name,account_balance,username",
     [
-        ("", 1, "", 500.00, "johnsmith", 200),
-        ("", 1, None, 500.00, "janesmith", 200),
-        (None, 1, "", 500.00, "johnsmith", 200),
-        (None, 1, None, 500.00, "janesmith", 200),
+        ("", 1, "", 500.00, "johnsmith"),
+        ("", 1, None, 500.00, "janesmith"),
+        (None, 1, "", 500.00, "johnsmith"),
+        (None, 1, None, 500.00, "janesmith"),
     ],
 )
 def test_account_name_missing(
@@ -144,7 +181,6 @@ def test_account_name_missing(
     account_name,
     account_balance,
     username,
-    expected_status_code,
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
     res = client.post(
@@ -157,18 +193,18 @@ def test_account_name_missing(
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 201
     assert res.json["account"]["account_name"] == "Squirtle is lucky"
 
 
 @pytest.mark.parametrize(
-    "account_id, account_type, account_balance, username, expected_status_code",
+    "account_id, account_type, account_balance, username",
     [
-        ("", 1, None, "johnsmith", 200),
+        ("", 1, None, "johnsmith"),
     ],
 )
 def test_account_balance_missing_on_creation(
-    client, account_id, account_type, account_balance, username, expected_status_code
+    client, account_id, account_type, account_balance, username
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
     res = client.post(
@@ -181,5 +217,5 @@ def test_account_balance_missing_on_creation(
             "username": username,
         },
     )
-    assert res.status_code == expected_status_code
+    assert res.status_code == 201
     assert res.json["account"]["account_balance"] == 0
