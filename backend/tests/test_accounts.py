@@ -258,14 +258,14 @@ def test_get_account_failure(
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
     res = client.get(f"/account?account_id={account_id}&username={username}")
-    assert res.status_code == 400
+    assert res.status_code == 404
 
 
 @pytest.mark.parametrize(
     "account_id, account_type, account_name, account_balance, username",
     TEST_NEW_ACCT_DATA,
 )
-def test_delete_account_success(
+def test_delete_account_exists(
     client, account_id, account_type, account_name, account_balance, username
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
@@ -280,16 +280,16 @@ def test_delete_account_success(
         },
     )
     acct_id = post_res.json["account"]["account_id"]
-    res = client.delete(f"/account?account_id{acct_id}&username={username}")
+    res = client.delete(f"/account?account_id={acct_id}&username={username}")
     assert res.status_code == 200
 
 
 @pytest.mark.parametrize(
     "account_id, account_type, account_name, account_balance, username", TEST_ACCT_DATA
 )
-def test_delete_account_success(
+def test_delete_account_not_exists(
     client, account_id, account_type, account_name, account_balance, username
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
-    res = client.delete(f"/account?account_id{account_id}&username={username}")
-    assert res.status_code == 400
+    res = client.delete(f"/account?account_id={account_id}&username={username}")
+    assert res.status_code == 204

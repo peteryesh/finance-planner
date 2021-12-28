@@ -180,23 +180,26 @@ def create_app(config):
                     )
 
             elif request.method == "GET":
-                if not account_exists(session, account_info["account_id"]):
-                    return (
-                        jsonify({"success": False, "msg": "Account does not exist"}),
-                        400,
-                    )
-                else:
+                if "account_id" not in account_info:
+                    # return list of accounts that belong to user or something
+                    pass
+                elif account_exists(session, account_info["account_id"]):
                     acct = get_account_from_db(session, account_info["account_id"])
                     return (
                         jsonify({"success": True, "account": acct.account_dict()}),
                         200,
                     )
+                else:
+                    return (
+                        jsonify({"success": False, "msg": "Account does not exist"}),
+                        404,
+                    )
 
             elif request.method == "DELETE":
                 if not account_exists(session, account_info["account_id"]):
                     return (
-                        jsonify({"success": False, "msg": "Account does not exist"}),
-                        400,
+                        jsonify({"success": True, "msg": "Account does not exist"}),
+                        204,
                     )
                 else:
                     acct = get_account_from_db(session, account_info["account_id"])
