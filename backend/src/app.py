@@ -111,25 +111,28 @@ def create_app(config):
             return jsonify({"success": False, "msg": "User does not exist"}), 204
 
     ## Account endpoints ##
-    @app.route("/account", methods=["POST"])
-    def add_account():
+    @app.route("/account", methods=["POST", "GET", "DELETE"])
+    def submit_account():
         if request.method == "POST":
             account_info = request.json
+        elif request.method == "GET" or request.method == "DELETE":
+            account_info = request.args
 
-            # Error check
+        with Session.begin() as session:
             if string_blank(account_info["username"]):
                 return jsonify({"response": "username cannot be blank"}), 400
-            if not account_type_valid(account_info["account_type"]):
-                return jsonify({"response": "Account type is not valid"}), 400
+            if not user_exists(session, account_info["username"]):
+                return (
+                    jsonify({"success": False, "msg": "User does not exist"}),
+                    400,
+                )
 
-            with Session.begin() as session:
-                if not user_exists(session, account_info["username"]):
-                    return (
-                        jsonify({"success": False, "msg": "User does not exist"}),
-                        400,
-                    )
+            if request.method == "POST":
+                if not account_type_valid(account_info["account_type"]):
+                    return jsonify({"response": "Account type is not valid"}), 400
+
                 # If a blank account_id is given, regard as new account entry
-                elif string_blank(account_info["account_id"]):
+                if string_blank(account_info["account_id"]):
                     new_account_id = str(uuid.uuid4())
                     while account_exists(session, new_account_id):
                         new_account_id = str(uuid.uuid4())
@@ -174,6 +177,33 @@ def create_app(config):
                     return (
                         jsonify({"success": False, "msg": "Account does not exist"}),
                         400,
+                    )
+
+            elif request.method == "GET":
+                if not account_exists(session, account_info["account_id"]):
+                    return (
+                        jsonify({"success": False, "msg": "Account does not exist"}),
+                        400,
+                    )
+                else:
+                    acct = get_account_from_db(session, account_info["account_id"])
+                    return (
+                        jsonify({"success": True, "account": acct.account_dict()}),
+                        200,
+                    )
+
+            elif request.method == "DELETE":
+                if not account_exists(session, account_info["account_id"]):
+                    return (
+                        jsonify({"success": False, "msg": "Account does not exist"}),
+                        400,
+                    )
+                else:
+                    acct = get_account_from_db(session, account_info["account_id"])
+                    session.delete(acct)
+                    return (
+                        jsonify({"success": True, "msg": "Account has been deleted"}),
+                        200,
                     )
 
     ## Transaction endpoints ##
