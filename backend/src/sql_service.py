@@ -4,10 +4,16 @@ from typing import cast
 from sqlalchemy import Table, Column, Integer, String, Float, Date, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 
-Base = declarative_base()
+"""
+Global Constants
+    - MAX_STRING_LENGTH: Length decided to keep ui manageable (may be changed in the future)
+    - MAX_NAME_LENGTH: Length decided arbitrarily (may be changed in the future)
+"""
 MAX_STRING_LENGTH = 200
 MAX_NAME_LENGTH = 30
 UUID4_STRING_LENGTH = 36
+
+Base = declarative_base()
 
 
 class User(Base):
@@ -25,7 +31,7 @@ class User(Base):
             self.last_name,
         )
 
-    def user_dict(self):
+    def to_dict(self):
         return {
             "username": self.username,
             "first_name": self.first_name,
@@ -42,7 +48,7 @@ class Account(Base):
     account_balance = Column(Float)
     username = Column(String(MAX_NAME_LENGTH), ForeignKey("users.username"))
 
-    def account_dict(self):
+    def to_dict(self):
         return {
             "account_id": self.account_id,
             "account_type": self.account_type,
@@ -66,7 +72,7 @@ class Transaction(Base):
     )
     username = Column(String(MAX_NAME_LENGTH), ForeignKey("users.username"))
 
-    def transaction_dict(self):
+    def to_dict(self):
         return {
             "transaction_id": self.transaction_id,
             "date": str(self.date),

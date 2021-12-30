@@ -379,6 +379,84 @@ def test_get_transaction_failure(
     "transaction_id, date, amount, category, notes, account_id, username",
     TEST_TRANSACTION_DATA,
 )
+def test_get_all_user_transactions(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    trans_ct = 3
+    for i in range(trans_ct):
+        client.post(
+            "/transaction",
+            json={
+                "transaction_id": transaction_id,
+                "date": date,
+                "amount": amount,
+                "category": category,
+                "notes": notes,
+                "account_id": account_id,
+                "username": username,
+            },
+        )
+    res = client.get(f"/transaction?username={username}")
+    assert res.status_code == 200
+    assert len(res.json["transactions"]) == trans_ct
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_TRANSACTION_DATA,
+)
+def test_get_all_user_transactions(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    acct_res = client.post(
+        "/account",
+        json={
+            "account_id": account_id,
+            "account_type": 1,
+            "account_name": "",
+            "account_balance": 0,
+            "username": username,
+        },
+    )
+    acct_id = acct_res.json["account"]["account_id"]
+    trans_ct = 5
+    for i in range(trans_ct):
+        client.post(
+            "/transaction",
+            json={
+                "transaction_id": transaction_id,
+                "date": date,
+                "amount": amount,
+                "category": category,
+                "notes": notes,
+                "account_id": acct_id,
+                "username": username,
+            },
+        )
+    res = client.get(f"/transaction?username={username}&account_id={acct_id}")
+    assert res.status_code == 200
+    assert len(res.json["transactions"]) == trans_ct
+
+
+@pytest.mark.parametrize(
+    "username, account_id",
+    {
+        ("johnsmith", "1fb49b3d-6078-4671-92f7-1cb16710f6ce"),
+        ("janesmith", "01901f87-6c64-4d37-a0c3-7590797f609a"),
+    },
+)
+def test_get_all_user_transactions(client, username, account_id):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    res = client.get(f"/transaction?username={username}&account_id={account_id}")
+    assert res.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_TRANSACTION_DATA,
+)
 def test_delete_transaction_exists(
     client, transaction_id, date, amount, category, notes, account_id, username
 ):

@@ -63,7 +63,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": user.user_dict(),
+                                "user": user.to_dict(),
                                 "msg": "Updated user information",
                             }
                         ),
@@ -78,7 +78,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": new_user.user_dict(),
+                                "user": new_user.to_dict(),
                                 "msg": "New user created",
                             }
                         ),
@@ -97,7 +97,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": get_user_from_db(session, username).user_dict(),
+                                "user": get_user_from_db(session, username).to_dict(),
                             }
                         ),
                         200,
@@ -163,7 +163,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "account": new_account.account_dict(),
+                                "account": new_account.to_dict(),
                                 "msg": "New account successfully created",
                             }
                         ),
@@ -178,7 +178,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "account": acct.account_dict(),
+                                "account": acct.to_dict(),
                                 "msg": "Account info successfully updated",
                             }
                         ),
@@ -192,12 +192,25 @@ def create_app(config):
 
             elif request.method == "GET":
                 if "account_id" not in account_info:
-                    # return list of accounts that belong to user or something
-                    pass
+                    # Return all accounts that belong to the user if no account_id is given in args
+                    all_accounts = (
+                        session.query(Account)
+                        .filter_by(username=account_info["username"])
+                        .all()
+                    )
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "accounts": make_accounts_json(all_accounts),
+                            }
+                        ),
+                        200,
+                    )
                 elif account_exists(session, account_info["account_id"]):
                     acct = get_account_from_db(session, account_info["account_id"])
                     return (
-                        jsonify({"success": True, "account": acct.account_dict()}),
+                        jsonify({"success": True, "account": acct.to_dict()}),
                         200,
                     )
                 else:
@@ -302,7 +315,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "transaction": new_transaction.transaction_dict(),
+                                "transaction": new_transaction.to_dict(),
                                 "msg": "New transaction successfully created",
                             }
                         ),
@@ -321,7 +334,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "transaction": trans.transaction_dict(),
+                                "transaction": trans.to_dict(),
                                 "msg": "Transaction successfully updated",
                             }
                         ),
@@ -336,15 +349,54 @@ def create_app(config):
                     )
             elif request.method == "GET":
                 if "transaction_id" not in transaction:
-                    pass
+                    if "account_id" not in transaction:
+                        # Return all transactions that belong to the user if no transaction_id or account_id is given in args
+                        all_transactions = (
+                            session.query(Transaction)
+                            .filter_by(username=transaction["username"])
+                            .all()
+                        )
+                        return (
+                            jsonify(
+                                {
+                                    "success": True,
+                                    "transactions": make_transactions_json(
+                                        all_transactions
+                                    ),
+                                }
+                            ),
+                            200,
+                        )
+                    elif account_exists(session, transaction["account_id"]):
+                        all_acct_transactions = (
+                            session.query(Transaction)
+                            .filter_by(account_id=transaction["account_id"])
+                            .all()
+                        )
+                        return (
+                            jsonify(
+                                {
+                                    "success": True,
+                                    "transactions": make_transactions_json(
+                                        all_acct_transactions
+                                    ),
+                                }
+                            ),
+                            200,
+                        )
+                    else:
+                        return (
+                            jsonify(
+                                {"success": False, "msg": "Account does not exist"}
+                            ),
+                            404,
+                        )
                 elif transaction_exists(session, transaction["transaction_id"]):
                     trans = get_transaction_from_db(
                         session, transaction["transaction_id"]
                     )
                     return (
-                        jsonify(
-                            {"success": True, "transaction": trans.transaction_dict()}
-                        ),
+                        jsonify({"success": True, "transaction": trans.to_dict()}),
                         200,
                     )
                 else:
@@ -423,22 +475,41 @@ def get_transaction_from_db(session, trans_id):
     return session.query(Transaction).filter_by(transaction_id=trans_id).one()
 
 
-def account_type_valid(acct_type: int):
-    if acct_type is None:
+def is_valid(categories, category):
+    if category is None:
         return False
-    for type in AccountType:
-        if acct_type == type.value:
+    for valid_category in categories:
+        if category == valid_category.value:
             return True
     return False
+
+
+def account_type_valid(acct_type: int):
+    return is_valid(AccountType, acct_type)
 
 
 def transaction_type_valid(category: int):
-    if category is None:
-        return False
-    for cat in TransactionType:
-        if category == cat.value:
-            return True
-    return False
+    return is_valid(TransactionType, category)
+
+
+def make_list_json_serializable(sql_type, rows):
+    """
+    sql_type: One of the Base class types in sql_alchemy
+    rows: List created by sqlalchemy query all()
+    returns: List of dicts representing the information in the sql rows of the given query
+    """
+    ret_list = []
+    for row in rows:
+        ret_list.append(sql_type.to_dict(row))
+    return ret_list
+
+
+def make_accounts_json(rows):
+    return make_list_json_serializable(Account, rows)
+
+
+def make_transactions_json(rows):
+    return make_list_json_serializable(Transaction, rows)
 
 
 def string_blank(s: str):
