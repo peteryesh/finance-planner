@@ -65,7 +65,7 @@ def test_create_transaction_with_account(
     client, transaction_id, date, amount, category, notes, account_id, username
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
-    acct_res = client.post(
+    post_res = client.post(
         "/account",
         json={
             "account_id": account_id,
@@ -83,7 +83,7 @@ def test_create_transaction_with_account(
             "amount": amount,
             "category": category,
             "notes": notes,
-            "account_id": acct_res.json["account"]["account_id"],
+            "account_id": post_res.json["account"]["account_id"],
             "username": username,
         },
     )
@@ -94,7 +94,7 @@ def test_create_transaction_with_account(
     assert res.json["transaction"]["category"] == category
     assert res.json["transaction"]["notes"] == notes
     assert (
-        res.json["transaction"]["account_id"] == acct_res.json["account"]["account_id"]
+        res.json["transaction"]["account_id"] == post_res.json["account"]["account_id"]
     )
     assert res.json["transaction"]["username"] == username
 
@@ -279,7 +279,7 @@ def test_change_transaction_info(
     client, transaction_id, date, amount, category, notes, account_id, username
 ):
     client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
-    acct_res = client.post(
+    post_res = client.post(
         "/account",
         json={
             "account_id": account_id,
@@ -310,7 +310,7 @@ def test_change_transaction_info(
             "amount": amount + 5000,
             "category": category + 2,
             "notes": notes + " and some extra notes",
-            "account_id": acct_res.json["account"]["account_id"],
+            "account_id": post_res.json["account"]["account_id"],
             "username": username,
         },
     )
@@ -321,6 +321,95 @@ def test_change_transaction_info(
     assert res.json["transaction"]["category"] == category + 2
     assert res.json["transaction"]["notes"] == notes + " and some extra notes"
     assert (
-        res.json["transaction"]["account_id"] == acct_res.json["account"]["account_id"]
+        res.json["transaction"]["account_id"] == post_res.json["account"]["account_id"]
     )
     assert res.json["transaction"]["username"] == username
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_TRANSACTION_DATA,
+)
+def test_get_transaction_success(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    post_res = client.post(
+        "/transaction",
+        json={
+            "transaction_id": transaction_id,
+            "date": date,
+            "amount": amount,
+            "category": category,
+            "notes": notes,
+            "account_id": account_id,
+            "username": username,
+        },
+    )
+    trans_id = post_res.json["transaction"]["transaction_id"]
+
+    res = client.get(f"/transaction?transaction_id={trans_id}&username={username}")
+
+    assert res.status_code == 200
+    assert len(res.json["transaction"]["transaction_id"]) == 36
+    assert res.json["transaction"]["transaction_id"] == trans_id
+    assert res.json["transaction"]["date"] == date
+    assert res.json["transaction"]["amount"] == amount
+    assert res.json["transaction"]["category"] == category
+    assert res.json["transaction"]["notes"] == notes
+    assert res.json["transaction"]["account_id"] == account_id
+    assert res.json["transaction"]["username"] == username
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_EXISTING_TRANSACTION_DATA,
+)
+def test_get_transaction_failure(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    res = client.get(
+        f"/transaction?transaction_id={transaction_id}&username={username}"
+    )
+    assert res.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_TRANSACTION_DATA,
+)
+def test_delete_transaction_exists(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    post_res = client.post(
+        "/transaction",
+        json={
+            "transaction_id": transaction_id,
+            "date": date,
+            "amount": amount,
+            "category": category,
+            "notes": notes,
+            "account_id": account_id,
+            "username": username,
+        },
+    )
+    trans_id = post_res.json["transaction"]["transaction_id"]
+
+    res = client.delete(f"/transaction?transaction_id={trans_id}&username={username}")
+    assert res.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "transaction_id, date, amount, category, notes, account_id, username",
+    TEST_EXISTING_TRANSACTION_DATA,
+)
+def test_delete_transaction_not_exists(
+    client, transaction_id, date, amount, category, notes, account_id, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    res = client.delete(
+        f"/transaction?transaction_id={transaction_id}&username={username}"
+    )
+    assert res.status_code == 204

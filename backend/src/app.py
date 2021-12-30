@@ -335,9 +335,42 @@ def create_app(config):
                         404,
                     )
             elif request.method == "GET":
-                pass
+                if "transaction_id" not in transaction:
+                    pass
+                elif transaction_exists(session, transaction["transaction_id"]):
+                    trans = get_transaction_from_db(
+                        session, transaction["transaction_id"]
+                    )
+                    return (
+                        jsonify(
+                            {"success": True, "transaction": trans.transaction_dict()}
+                        ),
+                        200,
+                    )
+                else:
+                    return (
+                        jsonify(
+                            {"success": False, "msg": "Transaction does not exist"}
+                        ),
+                        404,
+                    )
             elif request.method == "DELETE":
-                pass
+                if not transaction_exists(session, transaction["transaction_id"]):
+                    return (
+                        jsonify({"success": True, "msg": "Transaction does not exist"}),
+                        204,
+                    )
+                else:
+                    trans = get_transaction_from_db(
+                        session, transaction["transaction_id"]
+                    )
+                    session.delete(trans)
+                    return (
+                        jsonify(
+                            {"success": True, "msg": "Transaction has been deleted"}
+                        ),
+                        200,
+                    )
 
     return app
 
@@ -416,8 +449,6 @@ def main():
     print("Starting app...")
     config = {
         "DATABASE_CONNECTION_STRING": "sqlite:///../../databases/finance_tracker.db",
-        "MAX_STRING_LENGTH": 200,
-        "MAX_NAME_LENGTH": 30,
     }
     app = create_app(config)
     app.run(debug=True)
