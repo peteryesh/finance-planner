@@ -1,13 +1,24 @@
 import uuid
+import re
+from datetime import date
 
 from flask import Flask, request, jsonify, Response, g, current_app
 from flask_cors import CORS
 
 from sqlalchemy import create_engine, MetaData, select, update
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.sql.expression import false
+from sqlalchemy.sql.functions import user
 
-from src.sql_service import User, Account, Transaction, Base
-from src.types import AccountType
+from src.sql_service import (
+    User,
+    Account,
+    Transaction,
+    Base,
+    MAX_NAME_LENGTH,
+    MAX_STRING_LENGTH,
+)
+from src.types import AccountType, TransactionType
 
 
 def create_app(config):
@@ -32,7 +43,7 @@ def create_app(config):
 
     ## User endpoints ##
     @app.route("/user", methods=["POST", "GET", "PUT", "DELETE"])
-    def add_user():
+    def user_endpoint():
         if request.method == "POST":
             username = request.json["username"]
             first_name = request.json["first_name"]
@@ -112,7 +123,7 @@ def create_app(config):
 
     ## Account endpoints ##
     @app.route("/account", methods=["POST", "GET", "DELETE"])
-    def submit_account():
+    def account_endpoint():
         if request.method == "POST":
             account_info = request.json
         elif request.method == "GET" or request.method == "DELETE":
@@ -210,21 +221,123 @@ def create_app(config):
                     )
 
     ## Transaction endpoints ##
-    @app.route("/addtransaction", methods=["POST"])
-    def add_transaction():
-        return ""
+    @app.route("/transaction", methods=["POST", "GET", "DELETE"])
+    def transaction_endpoint():
+        if request.method == "POST":
+            transaction = request.json
+        elif request.method == "GET" or request.method == "DELETE":
+            transaction = request.args
 
-    @app.route("/updatetransaction", methods=["POST"])
-    def update_transaction():
-        return ""
+        with Session.begin() as session:
+            if string_blank(transaction["username"]):
+                return (
+                    jsonify({"success": False, "msg": "Username cannot be blank"}),
+                    400,
+                )
+            if not user_exists(session, transaction["username"]):
+                return jsonify({"success": False, "msg": "User does not exist"}), 400
 
-    @app.route("/deletetransaction", methods=["GET"])
-    def delete_transaction():
-        return ""
+            if request.method == "POST":
+                if not transaction_type_valid(transaction["category"]):
+                    return (
+                        jsonify(
+                            {"success": False, "msg": "Transaction type is not valid"}
+                        ),
+                        400,
+                    )
+                if not string_blank(transaction["account_id"]) and not account_exists(
+                    session, transaction["account_id"]
+                ):
+                    return (
+                        jsonify({"success": False, "msg": "Account does not exist"}),
+                        404,
+                    )
+                if (
+                    not string_blank(transaction["notes"])
+                    and len(transaction["notes"]) > MAX_STRING_LENGTH
+                ):
+                    return (
+                        jsonify({"success": False, "msg": "Note string is too long"}),
+                        400,
+                    )
+                if not string_blank(transaction["date"]):
+                    try:
+                        new_date = date.fromisoformat(transaction["date"])
+                    except ValueError:
+                        return (
+                            jsonify(
+                                {"success": False, "msg": "Date is not in iso format"}
+                            ),
+                            422,
+                        )
+                    except TypeError:
+                        return (
+                            jsonify(
+                                {
+                                    "success": False,
+                                    "msg": "Date must be sent as a string",
+                                }
+                            ),
+                            422,
+                        )
+                else:
+                    new_date = None
 
-    @app.route("/viewtransactions", methods=["GET"])
-    def view_transactions():
-        return ""
+                # If a blank transaction_id is given, regard as new transaction entry
+                if string_blank(transaction["transaction_id"]):
+                    new_transaction_id = str(uuid.uuid4())
+                    while transaction_exists(session, new_transaction_id):
+                        new_transaction_id = str(uuid.uuid4())
+                    new_transaction = Transaction(
+                        transaction_id=new_transaction_id,
+                        date=new_date,
+                        amount=transaction["amount"],
+                        category=transaction["category"],
+                        notes=transaction["notes"],
+                        account_id=transaction["account_id"],
+                        username=transaction["username"],
+                    )
+                    session.add(new_transaction)
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "transaction": new_transaction.transaction_dict(),
+                                "msg": "New transaction successfully created",
+                            }
+                        ),
+                        201,
+                    )
+                elif transaction_exists(session, transaction["transaction_id"]):
+                    trans = get_transaction_from_db(
+                        session, transaction["transaction_id"]
+                    )
+                    trans.date = new_date
+                    trans.amount = transaction["amount"]
+                    trans.category = transaction["category"]
+                    trans.notes = transaction["notes"]
+                    trans.account_id = transaction["account_id"]
+                    return (
+                        jsonify(
+                            {
+                                "success": True,
+                                "transaction": trans.transaction_dict(),
+                                "msg": "Transaction successfully updated",
+                            }
+                        ),
+                        200,
+                    )
+                else:
+                    return (
+                        jsonify(
+                            {"success": False, "msg": "Transaction does not exist"}
+                        ),
+                        404,
+                    )
+            elif request.method == "GET":
+                pass
+            elif request.method == "DELETE":
+                pass
 
     return app
 
@@ -265,11 +378,32 @@ def get_account_from_db(session, acct_id):
     return session.query(Account).filter_by(account_id=acct_id).one()
 
 
+def transaction_exists(session, trans_id):
+    return session.query(
+        session.query(Transaction)
+        .filter(Transaction.transaction_id == trans_id)
+        .exists()
+    ).scalar()
+
+
+def get_transaction_from_db(session, trans_id):
+    return session.query(Transaction).filter_by(transaction_id=trans_id).one()
+
+
 def account_type_valid(acct_type: int):
     if acct_type is None:
         return False
     for type in AccountType:
         if acct_type == type.value:
+            return True
+    return False
+
+
+def transaction_type_valid(category: int):
+    if category is None:
+        return False
+    for cat in TransactionType:
+        if category == cat.value:
             return True
     return False
 
@@ -281,7 +415,9 @@ def string_blank(s: str):
 def main():
     print("Starting app...")
     config = {
-        "DATABASE_CONNECTION_STRING": "sqlite:///../../databases/finance_tracker.db"
+        "DATABASE_CONNECTION_STRING": "sqlite:///../../databases/finance_tracker.db",
+        "MAX_STRING_LENGTH": 200,
+        "MAX_NAME_LENGTH": 30,
     }
     app = create_app(config)
     app.run(debug=True)
