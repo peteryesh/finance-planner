@@ -265,6 +265,31 @@ def test_get_account_failure(
     "account_id, account_type, account_name, account_balance, username",
     TEST_NEW_ACCT_DATA,
 )
+def test_get_all_accounts(
+    client, account_id, account_type, account_name, account_balance, username
+):
+    client.post("/user", json={"username": username, "first_name": "", "last_name": ""})
+    account_ct = 3
+    for i in range(account_ct):
+        client.post(
+            "/account",
+            json={
+                "account_id": account_id,
+                "account_type": account_type,
+                "account_name": account_name,
+                "account_balance": account_balance,
+                "username": username,
+            },
+        )
+    res = client.get(f"/account?username={username}")
+    assert res.status_code == 200
+    assert len(res.json["accounts"]) == account_ct
+
+
+@pytest.mark.parametrize(
+    "account_id, account_type, account_name, account_balance, username",
+    TEST_NEW_ACCT_DATA,
+)
 def test_delete_account_exists(
     client, account_id, account_type, account_name, account_balance, username
 ):
