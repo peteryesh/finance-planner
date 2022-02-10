@@ -1,34 +1,3 @@
-<h1>Adding users</h1>
-
-<button (click)="submitUser()">Add User</button>
-<button (click)="viewUser()">Test View User</button>
-<button (click)="deleteUser()">Test Delete User</button>
-
-<div>
-    <input 
-        type="text" 
-        #usernameInput
-        (keyup)="usernameChange(usernameInput.value)"
-        name="username"
-    />
-    <p>username: {{user.username}}</p>
-
-    <input 
-        type="text" 
-        #firstNameInput
-        (keyup)="firstNameChange(firstNameInput.value)"
-        name="firstName"
-    />
-    <p>first name: {{user.first_name}}</p>
-
-    <input 
-        type="text" 
-        #lastNameInput
-        (keyup)="lastNameChange(lastNameInput.value)"
-        name="lastName"
-    />
-    <p>last name: {{user.last_name}}</p>
-</div>
-
+<h1>Finance Tracker</h1>
 
 <router-outlet></router-outlet>
