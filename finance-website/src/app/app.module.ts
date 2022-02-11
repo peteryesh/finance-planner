@@ -6,17 +6,20 @@ import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
 
 import { UserLoginComponent  } from 'src/components/user-login/user-login.component';
+import { AccountComponent } from 'src/components/account/account.component';
+import { UserMainComponent } from 'src/components/user-main/user-main.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    UserLoginComponent
+    UserLoginComponent,
+    AccountComponent,
+    UserMainComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     RouterModule.forRoot([
-        {path: 'user-login', component: UserLoginComponent}
     ]),
     HttpClientModule
   ],

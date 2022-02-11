@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { User } from '../../types/User';
 import { DBService } from '../../services/db/db.service';
 import { DBResponse } from 'src/types/DBResponse';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-login',
@@ -16,7 +17,10 @@ export class UserLoginComponent {
         last_name: ''
     }
 
-    constructor(private dbService: DBService) { }
+    constructor(
+        private dbService: DBService,
+        private router: Router
+    ) { }
 
     usernameChange(val: string) {
         this.tempUser.username = val;
@@ -31,7 +35,13 @@ export class UserLoginComponent {
     }
 
     async getUserInfo() {
-        const res = await this.dbService.viewUser(this.tempUser.username);
+        const res = await this.dbService.getUser(this.tempUser.username);
+        if (res) {
+            this.router.navigateByUrl(`/`);
+        }
+        else {
+            alert("Error retrieving user");
+        }
     }
 
     addUser() {

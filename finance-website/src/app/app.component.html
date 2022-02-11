@@ -1,3 +1,16 @@
 <h1>Finance Tracker</h1>
+<ng-container *ngIf="(user$ | async) as user">
+    <div *ngIf="user.username !== ''; else loggedOut">
+        user: {{user.username}}
+        <app-user-main
+            [user]="user"
+            [accounts]="(accounts$ | async)!"
+        >
+        </app-user-main>
+    </div>
+    <ng-template #loggedOut>
+        <app-user-login></app-user-login>
+    </ng-template>
+</ng-container>
 
 <router-outlet></router-outlet>

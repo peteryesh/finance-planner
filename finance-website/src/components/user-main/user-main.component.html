@@ -1,0 +1,17 @@
+<div>
+    <input
+        type="text"
+        #newAccountName
+        (keyup)="accountNameChange(newAccountName.value)"
+        name="accountName"
+    />
+    <button (click)="createAccount(newAccount)">Create Account</button>
+    <button (click)="getAccounts(user.username)">Get Accounts</button>
+    <div>
+        <app-account 
+            *ngFor="let acct of accounts"
+            [account]="acct"
+        >
+        </app-account>
+    </div>
+</div>
