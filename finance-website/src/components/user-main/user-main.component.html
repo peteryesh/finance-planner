@@ -7,11 +7,35 @@
     />
     <button (click)="createAccount(newAccount)">Create Account</button>
     <button (click)="getAccounts(user.username)">Get Accounts</button>
-    <div>
+    <div class="accounts-container">
         <app-account 
             *ngFor="let acct of accounts"
             [account]="acct"
         >
         </app-account>
     </div>
+
+    <div>
+        <input
+            type="text"
+            #newTransactionName
+            (keyup)="transactionNameChange(newTransactionName.value)"
+            name="transactionName"
+        />
+        <button (click)="createTransaction(newTransaction)">Create Transaction</button>
+        <button (click)="getTransactions(user.username)">Get Transactions</button>
+    </div>
+
+    <!-- <div>
+        <input type="text" [(ngModel)]="newTransaction.notes"/>
+    </div> -->
+    
+    <div class="transactions-container">
+        <app-transaction
+            *ngFor="let transaction of transactions"
+            [transaction]="transaction"
+        >
+        </app-transaction>
+    </div>
+
 </div>

@@ -2,8 +2,9 @@ import { Component } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { combineLatest, Observable, map, startWith } from 'rxjs';
 import { DBService } from 'src/services/db/db.service';
+import { User } from 'src/types/User';
 import { Account } from 'src/types/Account';
-import { User } from '../types/User';
+import { Transaction } from 'src/types/Transaction';
 
 @Component({
     selector: 'app-root',
@@ -15,6 +16,7 @@ export class AppComponent {
 
     user$: Observable<User>;
     accounts$: Observable<Account[]>;
+    transactions$: Observable<Transaction[]>;
 
     constructor(private dbService: DBService) {
         this.user$ = combineLatest([
@@ -30,6 +32,14 @@ export class AppComponent {
         ]).pipe(
             map(accounts => {
                 return accounts[0];
+            })
+        );
+
+        this.transactions$ = combineLatest([
+            this.dbService.transactions$
+        ]).pipe(
+            map(transactions => {
+                return transactions[0];
             })
         );
     }

@@ -24,16 +24,17 @@ export class DBService implements OnInit {
     user$: Observable<User>;
     private _accounts: BehaviorSubject<Account[]>;
     accounts$: Observable<Account[]>;
+    private _transactions: BehaviorSubject<Transaction[]>;
+    transactions$: Observable<Transaction[]>;
 
     constructor(private http: HttpClient) {
-        this._user = new BehaviorSubject<User>({
-            username: '',
-            first_name: '',
-            last_name: ''
-        });
+        this._user = new BehaviorSubject<User>({username: '', first_name: '', last_name: ''});
         this.user$ = this._user.asObservable();
         this._accounts = new BehaviorSubject<Account[]>([]);
         this.accounts$ = this._accounts.asObservable();
+        this._transactions = new BehaviorSubject<Transaction[]>([]);
+        console.log(this._transactions.getValue());
+        this.transactions$ = this._transactions.asObservable();
     }
 
     set user(val: User) {
@@ -49,7 +50,7 @@ export class DBService implements OnInit {
         response.subscribe(event => {console.log(event)});
     }
 
-    async getUser(username: String): Promise<boolean> {
+    async getUser(username: string): Promise<boolean> {
         try {
             const response = await lastValueFrom(this.http.get(`${this.dbUrlTest}/user?username=${username}`)) as DBResponse;
             if (response.success) {
@@ -65,7 +66,7 @@ export class DBService implements OnInit {
         return false;
     }
 
-    deleteUser(username: String) {
+    deleteUser(username: string) {
         const response = this.http.delete(`${this.dbUrlTest}/user?username=${username}`);
         response.subscribe(event => console.log(event));
         return response;
@@ -73,12 +74,12 @@ export class DBService implements OnInit {
 
     // Account Endpoints
 
-    async getAccount(acctID: String, username: String) {
+    async getAccount(acctID: string, username: string) {
         const res = await lastValueFrom(this.http.get(`${this.dbUrlTest}/account?account_id=${acctID}&username=${username}`)) as DBResponse;
         console.log(res);
     }
 
-    async getAllAccounts(username: String) {
+    async getAllAccounts(username: string) {
         try {
             const res = await lastValueFrom(this.http.get(`${this.dbUrlTest}/account?username=${username}`)) as DBResponse;
             if (res.success) {
@@ -88,7 +89,7 @@ export class DBService implements OnInit {
             console.log(res);
         }
         catch (error) {
-            console.log(error);
+            console.error(error);
         }
         return false;
     }
@@ -106,7 +107,7 @@ export class DBService implements OnInit {
             return res.success;
         }
         catch (error) {
-            console.log(error);
+            console.error(error);
         }
         return false;
     }
@@ -117,5 +118,39 @@ export class DBService implements OnInit {
 
     deleteAccount() {
 
+    }
+
+    // Transaction Endpoints
+
+    async getAllTransactions(username: string) {
+        try {
+            const res = await lastValueFrom(this.http.get(`${this.dbUrlTest}/transaction?username=${username}`)) as DBResponse;
+            if (res.success) {
+                const newTransactionArr = res.data as Transaction[];
+                this._transactions.next(newTransactionArr);
+            }
+            console.log(res);
+        }
+        catch (error) {
+            console.error(error);
+        }
+        return false;
+    }
+
+    async newTransaction(transaction: Transaction) {
+        try {
+            const res = await lastValueFrom(this.http.post(`${this.dbUrlTest}/transaction`, JSON.stringify(transaction), httpOptions)) as DBResponse;
+            if (res.success) {
+                const newTransaction = res.data as Transaction;
+                const newTransactionArr = this._transactions.getValue();
+                console.log(this._transactions.getValue());
+                newTransactionArr.push(newTransaction);
+                this._transactions.next(newTransactionArr);
+            }
+            return res.success;
+        } catch (error) {
+            console.error(error);
+        }
+        return false;
     }
 }

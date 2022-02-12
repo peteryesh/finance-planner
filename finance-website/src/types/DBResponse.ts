@@ -1,5 +1,5 @@
 export interface DBResponse {
     success: boolean;
-    msg?: String;
+    msg?: string;
     data?: Object;
 }

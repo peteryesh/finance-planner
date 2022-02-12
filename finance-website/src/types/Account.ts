@@ -1,7 +1,7 @@
 export interface Account {
-    account_id: String;
+    account_id: string;
     account_type: number;
-    account_name: String;
+    account_name: string;
     account_balance: number;
-    username: String;
+    username: string;
 }

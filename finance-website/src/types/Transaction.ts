@@ -1,9 +1,10 @@
 export interface Transaction {
-    transaction_id: String;
-    date: String; // YYYY-MM-DD
+    transaction_id: string;
+    name: string;
+    date: string; // YYYY-MM-DD
     amount: number;
     category: number;
-    notes: String;
-    account_id: String;
-    username: String;
+    notes: string;
+    account_id: string;
+    username: string;
 }
