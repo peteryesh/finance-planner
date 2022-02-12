@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class AccountType(Enum):
+    NONE = 0
     CHECKING = 1
     SAVINGS = 2
     MMA = 3
@@ -14,6 +15,7 @@ class AccountType(Enum):
 
 
 class TransactionType(Enum):
+    NONE = 0
     FOOD = 1
     SPENDING = 2
     TRANSPORTATION = 3

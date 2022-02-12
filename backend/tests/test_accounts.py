@@ -79,11 +79,11 @@ def test_new_account_id(
         },
     )
     assert res.status_code == 201
-    assert len(res.json["account"]["account_id"]) == 36
-    assert res.json["account"]["account_type"] == account_type
-    assert res.json["account"]["account_name"] == account_name
-    assert res.json["account"]["account_balance"] == account_balance
-    assert res.json["account"]["username"] == username
+    assert len(res.json["data"]["account_id"]) == 36
+    assert res.json["data"]["account_type"] == account_type
+    assert res.json["data"]["account_name"] == account_name
+    assert res.json["data"]["account_balance"] == account_balance
+    assert res.json["data"]["username"] == username
 
 
 @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ def test_post_valid_account_id(
     res = client.post(
         "/account",
         json={
-            "account_id": init_res.json["account"]["account_id"],
+            "account_id": init_res.json["data"]["account_id"],
             "account_type": account_type + 2,
             "account_name": account_name + "test string addition",
             "account_balance": account_balance - 5000,
@@ -136,11 +136,11 @@ def test_post_valid_account_id(
         },
     )
     assert res.status_code == 200
-    assert len(res.json["account"]["account_id"]) == 36
-    assert res.json["account"]["account_type"] == account_type + 2
-    assert res.json["account"]["account_name"] == account_name + "test string addition"
-    assert res.json["account"]["account_balance"] == account_balance - 5000
-    assert res.json["account"]["username"] == username
+    assert len(res.json["data"]["account_id"]) == 36
+    assert res.json["data"]["account_type"] == account_type + 2
+    assert res.json["data"]["account_name"] == account_name + "test string addition"
+    assert res.json["data"]["account_balance"] == account_balance - 5000
+    assert res.json["data"]["username"] == username
 
 
 @pytest.mark.parametrize(
@@ -194,7 +194,7 @@ def test_account_name_missing(
         },
     )
     assert res.status_code == 201
-    assert res.json["account"]["account_name"] == "Squirtle is lucky"
+    assert res.json["data"]["account_name"] == "Squirtle is lucky"
 
 
 @pytest.mark.parametrize(
@@ -218,7 +218,7 @@ def test_account_balance_missing_on_creation(
         },
     )
     assert res.status_code == 201
-    assert res.json["account"]["account_balance"] == 0
+    assert res.json["data"]["account_balance"] == 0
 
 
 @pytest.mark.parametrize(
@@ -239,15 +239,15 @@ def test_get_account_success(
             "username": username,
         },
     )
-    acct_id = post_res.json["account"]["account_id"]
+    acct_id = post_res.json["data"]["account_id"]
     res = client.get(f"/account?account_id={acct_id}&username={username}")
     assert res.status_code == 200
-    assert len(res.json["account"]["account_id"]) == 36
-    assert res.json["account"]["account_id"] == acct_id
-    assert res.json["account"]["account_type"] == account_type
-    assert res.json["account"]["account_name"] == account_name
-    assert res.json["account"]["account_balance"] == account_balance
-    assert res.json["account"]["username"] == username
+    assert len(res.json["data"]["account_id"]) == 36
+    assert res.json["data"]["account_id"] == acct_id
+    assert res.json["data"]["account_type"] == account_type
+    assert res.json["data"]["account_name"] == account_name
+    assert res.json["data"]["account_balance"] == account_balance
+    assert res.json["data"]["username"] == username
 
 
 @pytest.mark.parametrize(
@@ -283,7 +283,7 @@ def test_get_all_accounts(
         )
     res = client.get(f"/account?username={username}")
     assert res.status_code == 200
-    assert len(res.json["accounts"]) == account_ct
+    assert len(res.json["data"]) == account_ct
 
 
 @pytest.mark.parametrize(
@@ -304,7 +304,7 @@ def test_delete_account_exists(
             "username": username,
         },
     )
-    acct_id = post_res.json["account"]["account_id"]
+    acct_id = post_res.json["data"]["account_id"]
     res = client.delete(f"/account?account_id={acct_id}&username={username}")
     assert res.status_code == 200
 

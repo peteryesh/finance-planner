@@ -62,6 +62,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     transaction_id = Column(String(UUID4_STRING_LENGTH), primary_key=True)
+    name = Column(String(MAX_STRING_LENGTH))
     date = Column(Date)
     amount = Column(Float)
     category = Column(Integer)
@@ -75,6 +76,7 @@ class Transaction(Base):
     def to_dict(self):
         return {
             "transaction_id": self.transaction_id,
+            "name": self.name,
             "date": str(self.date),
             "amount": self.amount,
             "category": self.category,

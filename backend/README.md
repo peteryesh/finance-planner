@@ -6,4 +6,5 @@
 
 ## Running
 
+`cd ~/finance-planner/backend`
 `python -m src.app`

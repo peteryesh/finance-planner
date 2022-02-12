@@ -32,9 +32,9 @@ def test_get_existing_user(client, username, first_name, last_name):
         json={"username": username, "first_name": first_name, "last_name": last_name},
     )
     res = client.get(f"/user?username={username}")
-    assert res.json["user"]["username"] == username
-    assert res.json["user"]["first_name"] == first_name
-    assert res.json["user"]["last_name"] == last_name
+    assert res.json["data"]["username"] == username
+    assert res.json["data"]["first_name"] == first_name
+    assert res.json["data"]["last_name"] == last_name
     assert res.status_code == 200
 
 
@@ -60,9 +60,9 @@ def test_create_user(client, username, first_name, last_name):
         "/user",
         json={"username": username, "first_name": first_name, "last_name": last_name},
     )
-    assert res.json["user"]["username"] == username
-    assert res.json["user"]["first_name"] == first_name
-    assert res.json["user"]["last_name"] == last_name
+    assert res.json["data"]["username"] == username
+    assert res.json["data"]["first_name"] == first_name
+    assert res.json["data"]["last_name"] == last_name
     assert res.status_code == 201
 
 
@@ -72,15 +72,15 @@ def test_crd_user(client, username, first_name, last_name):
         "/user",
         json={"username": username, "first_name": first_name, "last_name": last_name},
     )
-    assert res.json["user"]["username"] == username
-    assert res.json["user"]["first_name"] == first_name
-    assert res.json["user"]["last_name"] == last_name
+    assert res.json["data"]["username"] == username
+    assert res.json["data"]["first_name"] == first_name
+    assert res.json["data"]["last_name"] == last_name
     assert res.status_code == 201
 
     res = client.get(f"/user?username={username}")
-    assert res.json["user"]["username"] == username
-    assert res.json["user"]["first_name"] == first_name
-    assert res.json["user"]["last_name"] == last_name
+    assert res.json["data"]["username"] == username
+    assert res.json["data"]["first_name"] == first_name
+    assert res.json["data"]["last_name"] == last_name
     assert res.status_code == 200
 
     res = client.delete(f"/user?username={username}")

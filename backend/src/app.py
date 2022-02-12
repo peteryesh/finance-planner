@@ -42,6 +42,16 @@ def create_app(config):
         return "Hello world!"
 
     ## User endpoints ##
+    """
+    POST
+    - if user exists, update user info
+    - if user does not exist, create new user
+    GET
+    - if user exists, return user info
+    DELETE
+    - if user exists, delete user
+    """
+
     @app.route("/user", methods=["POST", "GET", "PUT", "DELETE"])
     def user_endpoint():
         if request.method == "POST":
@@ -63,7 +73,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": user.to_dict(),
+                                "data": user.to_dict(),
                                 "msg": "Updated user information",
                             }
                         ),
@@ -78,7 +88,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": new_user.to_dict(),
+                                "data": new_user.to_dict(),
                                 "msg": "New user created",
                             }
                         ),
@@ -97,7 +107,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "user": get_user_from_db(session, username).to_dict(),
+                                "data": get_user_from_db(session, username).to_dict(),
                             }
                         ),
                         200,
@@ -122,6 +132,17 @@ def create_app(config):
             return jsonify({"success": False, "msg": "User does not exist"}), 204
 
     ## Account endpoints ##
+    """
+    POST
+    - if account id is missing, create a new account
+    - if account id exists, update account info
+    GET
+    - if account id is missing, get all accounts that belong to user
+    - if account id exists, return account info
+    DELETE
+    - if account exists, delete account
+    """
+
     @app.route("/account", methods=["POST", "GET", "DELETE"])
     def account_endpoint():
         if request.method == "POST":
@@ -163,7 +184,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "account": new_account.to_dict(),
+                                "data": new_account.to_dict(),
                                 "msg": "New account successfully created",
                             }
                         ),
@@ -178,7 +199,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "account": acct.to_dict(),
+                                "data": acct.to_dict(),
                                 "msg": "Account info successfully updated",
                             }
                         ),
@@ -202,7 +223,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "accounts": make_accounts_json(all_accounts),
+                                "data": make_accounts_json(all_accounts),
                             }
                         ),
                         200,
@@ -210,7 +231,7 @@ def create_app(config):
                 elif account_exists(session, account_info["account_id"]):
                     acct = get_account_from_db(session, account_info["account_id"])
                     return (
-                        jsonify({"success": True, "account": acct.to_dict()}),
+                        jsonify({"success": True, "data": acct.to_dict()}),
                         200,
                     )
                 else:
@@ -234,6 +255,18 @@ def create_app(config):
                     )
 
     ## Transaction endpoints ##
+    """
+    POST
+    - if transaction id is missing, create a new transaction
+    - if transaction id exists, update transaction info
+    GET
+    - if transaction id and account id are missing, get all transactions that belong to user
+    - if only transaction id is missing, get all transactions that belong to the specified account
+    - if transaction id exists, return transaction info
+    DELETE
+    - if transaction exists, delete transaction
+    """
+
     @app.route("/transaction", methods=["POST", "GET", "DELETE"])
     def transaction_endpoint():
         if request.method == "POST":
@@ -264,6 +297,16 @@ def create_app(config):
                     return (
                         jsonify({"success": False, "msg": "Account does not exist"}),
                         404,
+                    )
+                if (
+                    not string_blank(transaction["name"])
+                    and len(transaction["name"]) > MAX_STRING_LENGTH
+                ):
+                    return (
+                        jsonify(
+                            {"success": False, "msg": "Transaction name is too long"}
+                        ),
+                        400,
                     )
                 if (
                     not string_blank(transaction["notes"])
@@ -303,6 +346,7 @@ def create_app(config):
                         new_transaction_id = str(uuid.uuid4())
                     new_transaction = Transaction(
                         transaction_id=new_transaction_id,
+                        name=transaction["name"],
                         date=new_date,
                         amount=transaction["amount"],
                         category=transaction["category"],
@@ -315,7 +359,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "transaction": new_transaction.to_dict(),
+                                "data": new_transaction.to_dict(),
                                 "msg": "New transaction successfully created",
                             }
                         ),
@@ -325,6 +369,7 @@ def create_app(config):
                     trans = get_transaction_from_db(
                         session, transaction["transaction_id"]
                     )
+                    trans.name = transaction["name"]
                     trans.date = new_date
                     trans.amount = transaction["amount"]
                     trans.category = transaction["category"]
@@ -334,7 +379,7 @@ def create_app(config):
                         jsonify(
                             {
                                 "success": True,
-                                "transaction": trans.to_dict(),
+                                "data": trans.to_dict(),
                                 "msg": "Transaction successfully updated",
                             }
                         ),
@@ -360,9 +405,7 @@ def create_app(config):
                             jsonify(
                                 {
                                     "success": True,
-                                    "transactions": make_transactions_json(
-                                        all_transactions
-                                    ),
+                                    "data": make_transactions_json(all_transactions),
                                 }
                             ),
                             200,
@@ -377,7 +420,7 @@ def create_app(config):
                             jsonify(
                                 {
                                     "success": True,
-                                    "transactions": make_transactions_json(
+                                    "data": make_transactions_json(
                                         all_acct_transactions
                                     ),
                                 }
@@ -396,7 +439,7 @@ def create_app(config):
                         session, transaction["transaction_id"]
                     )
                     return (
-                        jsonify({"success": True, "transaction": trans.to_dict()}),
+                        jsonify({"success": True, "data": trans.to_dict()}),
                         200,
                     )
                 else:
@@ -429,7 +472,7 @@ def create_app(config):
 
 def get_db():
     """Establish a connection to the database and maintain that throughout the lifetime
-    of a gien flask app context
+    of a given flask app context
     """
     if "db" not in g:
         g.db = create_engine(current_app.config["DATABASE_CONNECTION_STRING"])
